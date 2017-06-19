@@ -3,7 +3,7 @@
  * **BUG.txt** MS17-010 bug detail and some analysis
  * **eternalblue_exploit7.py** Eternalblue exploit for windows 7/2008
  * **eternalblue_exploit8.py** Eternalblue exploit for windows 8/2012 x64
- * **eternalblue_poc** Eternalblue PoC for buffer overflow bug
+ * **eternalblue_poc.py** Eternalblue PoC for buffer overflow bug
  * **eternalchampion_leak.py** Eternalchampion PoC for leaking info part
  * **eternalchampion_poc.py** Eternalchampion PoC for controlling RIP
  * **eternalchampion_poc2.py** Eternalchampion PoC for getting code execution
