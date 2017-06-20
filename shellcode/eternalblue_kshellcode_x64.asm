@@ -13,6 +13,8 @@
 ;     get call because system call is called on other processors.
 ; - The shellcode do not allocate shadow stack if possible for minimal shellcode size.
 ;     It is ok because some Windows function does not require shadow stack.
+; - Compiling shellcode with specific Windows version macro, corrupted buffer will be freed.
+;     This helps running exploit against same target repeatly more reliable.
 ; - The userland payload MUST be appened to this shellcode.
 ;
 ; Reference:

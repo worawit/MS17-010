@@ -11,6 +11,8 @@
 ;     If userland shellcode causes any exception, the system process get killed.
 ; - On idle target with multiple core processors, the hijacked system call might take a while (> 5 minutes) to 
 ;     get call because system call is called on other processors.
+; - Compiling shellcode with specific Windows version macro, corrupted buffer will be freed.
+;     This helps running exploit against same target repeatly more reliable.
 ; - The userland payload MUST be appened to this shellcode.
 ;
 ; Reference:
