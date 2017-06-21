@@ -1,3 +1,7 @@
+# MS17-010
+
+This repository is for public my work on MS17-010. I have no plan to do any support. **All support issues will not get response from me**.
+
 ## Files
 
  * **BUG.txt** MS17-010 bug detail and some analysis
