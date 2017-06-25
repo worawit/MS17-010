@@ -103,7 +103,7 @@ def _setup_login_packet_hook(maxBufferSize):
 
 
 class MYSMB(smb.SMB):
-	def __init__(self, remote_host, use_ntlmv2=True):
+	def __init__(self, remote_host, use_ntlmv2=True, timeout=8):
 		self.__use_ntlmv2 = use_ntlmv2
 		self._default_tid = 0
 		self._pid = os.getpid() & 0xffff
@@ -113,7 +113,7 @@ class MYSMB(smb.SMB):
 		self._pkt_flags2 = 0
 		self._last_tid = 0  # last tid from connect_tree()
 		self._last_fid = 0  # last fid from nt_create_andx()
-		smb.SMB.__init__(self, remote_host, remote_host)
+		smb.SMB.__init__(self, remote_host, remote_host, timeout=timeout)
 	
 	def set_pid(self, pid):
 		self._pid = pid
@@ -179,7 +179,7 @@ class MYSMB(smb.SMB):
 		self.sendSMB(pkt)
 		return self.recvSMB()
 	
-	def do_write_andx_raw_pipe(self, fid, data, mid=None, pid=None):
+	def do_write_andx_raw_pipe(self, fid, data, mid=None, pid=None, tid=None):
 		writeAndX = smb.SMBCommand(smb.SMB.SMB_COM_WRITE_ANDX)
 		writeAndX['Parameters'] = smb.SMBWriteAndX_Parameters_Short()
 		writeAndX['Parameters']['Fid'] = fid
@@ -190,16 +190,16 @@ class MYSMB(smb.SMB):
 		writeAndX['Parameters']['DataOffset'] = 32 + len(writeAndX['Parameters']) + 1 + 2 + 1 # WordCount(1), ByteCount(2), Padding(1)
 		writeAndX['Data'] = '\x00' + data  # pad 1 byte
 		
-		self.send_raw(self.create_smb_packet(writeAndX, mid, pid))
+		self.send_raw(self.create_smb_packet(writeAndX, mid, pid, tid))
 		return self.recvSMB()
 	
-	def create_smb_packet(self, smbReq, mid=None, pid=None):
+	def create_smb_packet(self, smbReq, mid=None, pid=None, tid=None):
 		if mid is None:
 			mid = self.next_mid()
 		
 		pkt = smb.NewSMBPacket()
 		pkt.addCommand(smbReq)
-		pkt['Tid'] = self._default_tid
+		pkt['Tid'] = self._default_tid if tid is None else tid
 		pkt['Uid'] = self._uid
 		pkt['Pid'] = self._pid if pid is None else pid
 		pkt['Mid'] = mid
@@ -217,7 +217,7 @@ class MYSMB(smb.SMB):
 	def send_raw(self, data):
 		self.get_socket().send(data)
 	
-	def create_trans_packet(self, setup, param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, noPad=False):
+	def create_trans_packet(self, setup, param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, tid=None, noPad=False):
 		if maxSetupCount is None:
 			maxSetupCount = len(setup)
 		if totalParameterCount is None:
@@ -241,13 +241,13 @@ class MYSMB(smb.SMB):
 		transCmd['Parameters']['DataCount'] = len(data)
 		transCmd['Parameters']['Setup'] = setup
 		_put_trans_data(transCmd, param, data, noPad)
-		return self.create_smb_packet(transCmd, mid, pid)
+		return self.create_smb_packet(transCmd, mid, pid, tid)
 	
-	def send_trans(self, setup, param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, noPad=False):
-		self.send_raw(self.create_trans_packet(setup, param, data, mid, maxSetupCount, totalParameterCount, totalDataCount, maxParameterCount, maxDataCount, pid, noPad))
+	def send_trans(self, setup, param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, tid=None, noPad=False):
+		self.send_raw(self.create_trans_packet(setup, param, data, mid, maxSetupCount, totalParameterCount, totalDataCount, maxParameterCount, maxDataCount, pid, tid, noPad))
 		return self.recvSMB()
 
-	def create_trans_secondary_packet(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, noPad=False):
+	def create_trans_secondary_packet(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, tid=None, noPad=False):
 		transCmd = smb.SMBCommand(smb.SMB.SMB_COM_TRANSACTION_SECONDARY)
 		transCmd['Parameters'] = SMBTransactionSecondary_Parameters()
 		transCmd['Parameters']['TotalParameterCount'] = len(param)
@@ -258,12 +258,12 @@ class MYSMB(smb.SMB):
 		transCmd['Parameters']['DataDisplacement'] = dataDisplacement
 		
 		_put_trans_data(transCmd, param, data, noPad)
-		return self.create_smb_packet(transCmd, mid, pid)
+		return self.create_smb_packet(transCmd, mid, pid, tid)
 
-	def send_trans_secondary(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, noPad=False):
-		self.send_raw(self.create_trans_secondary_packet(mid, param, paramDisplacement, data, dataDisplacement, pid, noPad))
+	def send_trans_secondary(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, tid=None, noPad=False):
+		self.send_raw(self.create_trans_secondary_packet(mid, param, paramDisplacement, data, dataDisplacement, pid, tid, noPad))
 
-	def create_trans2_packet(self, setup, param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, noPad=False):
+	def create_trans2_packet(self, setup, param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, tid=None, noPad=False):
 		if maxSetupCount is None:
 			maxSetupCount = len(setup)
 		if totalParameterCount is None:
@@ -287,13 +287,13 @@ class MYSMB(smb.SMB):
 		transCmd['Parameters']['DataCount'] = len(data)
 		transCmd['Parameters']['Setup'] = setup
 		_put_trans_data(transCmd, param, data, noPad)
-		return self.create_smb_packet(transCmd, mid, pid)
+		return self.create_smb_packet(transCmd, mid, pid, tid)
 	
-	def send_trans2(self, setup, param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, noPad=False):
-		self.send_raw(self.create_trans2_packet(setup, param, data, mid, maxSetupCount, totalParameterCount, totalDataCount, maxParameterCount, maxDataCount, pid, noPad))
+	def send_trans2(self, setup, param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, tid=None, noPad=False):
+		self.send_raw(self.create_trans2_packet(setup, param, data, mid, maxSetupCount, totalParameterCount, totalDataCount, maxParameterCount, maxDataCount, pid, tid, noPad))
 		return self.recvSMB()
 
-	def create_trans2_secondary_packet(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, noPad=False):
+	def create_trans2_secondary_packet(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, tid=None, noPad=False):
 		transCmd = smb.SMBCommand(smb.SMB.SMB_COM_TRANSACTION2_SECONDARY)
 		transCmd['Parameters'] = SMBTransaction2Secondary_Parameters()
 		transCmd['Parameters']['TotalParameterCount'] = len(param)
@@ -304,12 +304,12 @@ class MYSMB(smb.SMB):
 		transCmd['Parameters']['DataDisplacement'] = dataDisplacement
 		
 		_put_trans_data(transCmd, param, data, noPad)
-		return self.create_smb_packet(transCmd, mid, pid)
+		return self.create_smb_packet(transCmd, mid, pid, tid)
 
-	def send_trans2_secondary(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, noPad=False):
-		self.send_raw(self.create_trans2_secondary_packet(mid, param, paramDisplacement, data, dataDisplacement, pid, noPad))
+	def send_trans2_secondary(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, tid=None, noPad=False):
+		self.send_raw(self.create_trans2_secondary_packet(mid, param, paramDisplacement, data, dataDisplacement, pid, tid, noPad))
 
-	def create_nt_trans_packet(self, function, setup='', param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, noPad=False):
+	def create_nt_trans_packet(self, function, setup='', param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, tid=None, noPad=False):
 		if maxSetupCount is None:
 			maxSetupCount = len(setup)
 		if totalParameterCount is None:
@@ -332,13 +332,13 @@ class MYSMB(smb.SMB):
 		transCmd['Parameters']['Function'] = function
 		transCmd['Parameters']['Setup'] = setup
 		_put_trans_data(transCmd, param, data, noPad)
-		return self.create_smb_packet(transCmd, mid, pid)
+		return self.create_smb_packet(transCmd, mid, pid, tid)
 	
-	def send_nt_trans(self, function, setup='', param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, noPad=False):
-		self.send_raw(self.create_nt_trans_packet(function, setup, param, data, mid, maxSetupCount, totalParameterCount, totalDataCount, maxParameterCount, maxDataCount, pid, noPad))
+	def send_nt_trans(self, function, setup='', param='', data='', mid=None, maxSetupCount=None, totalParameterCount=None, totalDataCount=None, maxParameterCount=None, maxDataCount=None, pid=None, tid=None, noPad=False):
+		self.send_raw(self.create_nt_trans_packet(function, setup, param, data, mid, maxSetupCount, totalParameterCount, totalDataCount, maxParameterCount, maxDataCount, pid, tid, noPad))
 		return self.recvSMB()
 
-	def create_nt_trans_secondary_packet(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, noPad=False):
+	def create_nt_trans_secondary_packet(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, tid=None, noPad=False):
 		transCmd = smb.SMBCommand(smb.SMB.SMB_COM_NT_TRANSACT_SECONDARY)
 		transCmd['Parameters'] = SMBNTTransactionSecondary_Parameters()
 		transCmd['Parameters']['TotalParameterCount'] = len(param)
@@ -348,10 +348,10 @@ class MYSMB(smb.SMB):
 		transCmd['Parameters']['DataCount'] = len(data)
 		transCmd['Parameters']['DataDisplacement'] = dataDisplacement
 		_put_trans_data(transCmd, param, data, noPad)
-		return self.create_smb_packet(transCmd, mid, pid)
+		return self.create_smb_packet(transCmd, mid, pid, tid)
 
-	def send_nt_trans_secondary(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, noPad=False):
-		self.send_raw(self.create_nt_trans_secondary_packet(mid, param, paramDisplacement, data, dataDisplacement, pid, noPad))
+	def send_nt_trans_secondary(self, mid, param='', paramDisplacement=0, data='', dataDisplacement=0, pid=None, tid=None, noPad=False):
+		self.send_raw(self.create_nt_trans_secondary_packet(mid, param, paramDisplacement, data, dataDisplacement, pid, tid, noPad))
 
 	def recv_transaction_data(self, mid, minLen):
 		data = ''
