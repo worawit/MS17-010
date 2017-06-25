@@ -18,6 +18,7 @@ This repository is for public my work on MS17-010. I have no plan to do any supp
  * **eternalromance_poc.py** Eternalromance PoC for OOB write
  * **eternalromance_poc2.py** Eternalromance PoC for controlling a transaction which leading to arbitrary read/write
  * **eternalsynergy_leak.py** Eternalsynergy PoC for leaking info part
+ * **eternalsynergy_poc.py** Eternalsynergy PoC for demonstrating heap spraying with large paged pool
  * **infoleak_uninit.py** PoC for leaking info from uninitialized transaction data buffer
  * **mysmb.py** Extended Impacket SMB class for easier to exploit MS17-010 bugs
  * **npp_control.py** PoC for controlling nonpaged pool allocation with session setup command
