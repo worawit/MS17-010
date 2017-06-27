@@ -75,8 +75,8 @@ Now, we go through some implementaion detail on Windows SMB transaction.
       +---------------+------------------------------------------------------------------------------+
                       | InSetup |  InParameters  |     InData     |  OutParameters  |    OutData     |
                       +------------------------------------------------------------------------------+
-  - memory layout for SMB_COM_NT_TRANS is shown below. All buffers are not overlapped. InParameters and OutParameters are
-    overlapped. InData and OutData are overlapped.
+  - memory layout for SMB_COM_NT_TRANS is shown below. InParameters and OutParameters are overlapped. 
+    InData and OutData are overlapped.
       +---------------+-----------------------------------------------------------+
       |  TRANSACTION  |               transaction data buffer                     |
       +---------------+-----------------------------------------------------------+
@@ -90,7 +90,8 @@ Now, we go through some implementaion detail on Windows SMB transaction.
 - After transaction is executed, ParameterCount and DataCount (is normally set in called transaction function) are used 
   for determining the reply size of OutParameters and OutData respectively.
 
-- A transaction displacement in SMB_COM_*_SECONDARY request can be pointed to sent displacement data
+- A SMB_COM_*_SECONDARY request can be used to overwrite a sent transaction parameters and data with displacement.
+  ParameterCount and DataCount is added no matter what (valid) displacement value is.
   - assume TotalParameterCount is 0 and TotalDataCount is 16
   - first transaction request has 8 bytes of data
   - secondary transaction request can have 8 bytes of data with displacement 0
@@ -102,7 +103,7 @@ Now, we go through some implementaion detail on Windows SMB transaction.
   - if last command is SMB_COM_TRANSACTION2_SECONDARY, a server executes subcommand as TRANS2_*.
   - if last command is SMB_COM_NT_TRANSACT_SECONDARY, a server executes subcommand as NT_TRANSACT_*.
 - A transaction is also used in SMB_COM_WRITE_ANDX command (https://msdn.microsoft.com/en-us/library/ee441954.aspx)
-  when WriteMode is RAW_MODE. This transaction use FID in parameters instead of MID in SMB header for
+  when WriteMode is RAW_MODE. The transaction uses FID in parameters instead of MID in SMB header for
   matching transaction.
 
 That should be enough for SMB transaction. It's time to start bug details.
@@ -138,7 +139,7 @@ But, as mentioned above, transaction InData and OutData are overlapped. Without 
 transaction *Parameter* and *Data*, a server returns InData (like echo).
 
 An only REQUIREMENT for using NT_TRANSACT_RENAME command is valid fid. So we need to get fid by opening 
-any piped name or share first.
+any named pipe or share first.
 
 This bug is not helpful for exploitation because leaked info is from freed buffer. It is difficult to get 
 exact information because a transaction size is always >=0x5000.
@@ -175,7 +176,7 @@ an error code 0xC0000205 (STATUS_INSUFF_SERVER_RESOURCES).
 When sending a large MaxParameterCount and MaxDataCount (sum of them is >0x10400), we will got an error code 0xC0000205.
 Because MS17-010 patch changes MaxParameterCount to 16 if transaction subcommand is TRANS_PEEK_NMPIPE before calling 
 SrvAllocationTransaction(), SrvPeekNamedPipe() will be called even sum of MaxParameterCount and MaxDataCount is >0x10400.
-The response from SrvPeekNamedPipe() is depended on our InParameters.
+The response from SrvPeekNamedPipe() is depended on our InSetup.
 
 
 
@@ -364,10 +365,9 @@ SrvOs2FeaListSizeToNt(feaList)
     return outputLen;
 }
 
-From pseudocode above, if we send feaList.SizeOfListInBytes=0x10000 while valid FEA entries in list is less than
-0x10000 bytes (assume 0x4000), the feaList.SizeOfListInBytes will be 0x14000 because HIDWORD is not modified and
-outputLen is only for FEA entries size 0x4000. Then the output buffer will be overflown while copy FEA data to
-output buffer.
+From above pseudocode, if we send feaList.SizeOfListInBytes=0x10000 while valid FEA entries in list is less than
+0x10000 bytes (assume 0x4000), the feaList.SizeOfListInBytes will be modified to 0x14000 because HIDWORD is not modified and
+outputLen is only 0x4000. Then the output buffer will be overflowed while copying FEA data to output buffer.
 
 As mentioned above, we need to send a transaction data that larger than 0x10000 bytes. But the FEA_LIST data is used
 only in SMB_COM_TRANSACTION2 which TotalDataCount is USHORT (max is 0xffff). So we need to Bug6 to send a FEA_LIST 
