@@ -5,6 +5,7 @@ This repository is for public my work on MS17-010. I have no plan to do any supp
 ## Files
 
  * **BUG.txt** MS17-010 bug detail and some analysis
+ * **checker.py** Script for finding accessible named pipe
  * **eternalblue_exploit7.py** Eternalblue exploit for windows 7/2008
  * **eternalblue_exploit8.py** Eternalblue exploit for windows 8/2012 x64
  * **eternalblue_poc.py** Eternalblue PoC for buffer overflow bug
@@ -22,14 +23,14 @@ This repository is for public my work on MS17-010. I have no plan to do any supp
  * **infoleak_uninit.py** PoC for leaking info from uninitialized transaction data buffer
  * **mysmb.py** Extended Impacket SMB class for easier to exploit MS17-010 bugs
  * **npp_control.py** PoC for controlling nonpaged pool allocation with session setup command
- * **zzz_exploit.py** Exploit for Windows7 and later (x64 only and requires access to named pipe)
+ * **zzz_exploit.py** Exploit for Windows7 and later (requires access to named pipe)
 
 
 ## Anonymous user
 
 Anonymous user (null session) get more restriction on default settings of new Windows version. To exploit Windows SMB without authentication, below behavior should be aware.
 
-* Since Windows Vista (maybe Windows 2003 SPx), default settings does not allow anonymous to access any named pipe
+* Since Windows Vista, default settings does not allow anonymous to access any named pipe
 * Since Windows 8, default settings does not allow anonymous to access IPC$ share (IPC$ might be acessible but cannot do much)
 
 
