@@ -223,7 +223,7 @@ class MYSMB(smb.SMB):
 		pkt['Flags2'] = self._pkt_flags2 if self._pkt_flags2 != 0 else flags2
 		
 		if self._SignatureEnabled:
-			pkt['Flags2'] |= SMB.FLAGS2_SMB_SECURITY_SIGNATURE
+			pkt['Flags2'] |= smb.SMB.FLAGS2_SMB_SECURITY_SIGNATURE
 			self.signSMB(pkt, self._SigningSessionKey, self._SigningChallengeResponse)
 			
 		req = str(pkt)
