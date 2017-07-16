@@ -9,8 +9,8 @@ This repository is for public my work on MS17-010. I have no plan to do any supp
  * **eternalblue_exploit7.py** Eternalblue exploit for windows 7/2008
  * **eternalblue_exploit8.py** Eternalblue exploit for windows 8/2012 x64
  * **eternalblue_poc.py** Eternalblue PoC for buffer overflow bug
- * **eternalblue_kshellcode_x64.asm** x64 kernel shellcode for my Eternalblue exploit. This shellcode should work on Windows Vista (maybe XP) and later 
- * **eternalblue_kshellcode_x86.asm** x86 kernel shellcode for my Eternalblue exploit. This shellcode should work on Windows Vista (maybe XP) and later
+ * **eternalblue_kshellcode_x64.asm** x64 kernel shellcode for my Eternalblue exploit. This shellcode should work on Windows Vista and later
+ * **eternalblue_kshellcode_x86.asm** x86 kernel shellcode for my Eternalblue exploit. This shellcode should work on Windows Vista and later
  * **eternalblue_sc_merge.py** Script for merging eternalblue x86 and x64 shellcode. Eternalblue exploit, that support both x86 and x64, with merged shellcode has no need to detect a target architecture
  * **eternalchampion_leak.py** Eternalchampion PoC for leaking info part
  * **eternalchampion_poc.py** Eternalchampion PoC for controlling RIP
@@ -23,7 +23,7 @@ This repository is for public my work on MS17-010. I have no plan to do any supp
  * **infoleak_uninit.py** PoC for leaking info from uninitialized transaction data buffer
  * **mysmb.py** Extended Impacket SMB class for easier to exploit MS17-010 bugs
  * **npp_control.py** PoC for controlling nonpaged pool allocation with session setup command
- * **zzz_exploit.py** Exploit for Windows7 and later (requires access to named pipe)
+ * **zzz_exploit.py** Exploit for Windows XP and later (requires access to named pipe)
 
 
 ## Anonymous user
