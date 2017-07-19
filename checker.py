@@ -40,7 +40,7 @@ target = sys.argv[1]
 conn = MYSMB(target)
 try:
 	conn.login(USERNAME, PASSWORD)
-except smb.SessionError, e:
+except smb.SessionError as e:
 	print('Login failed: ' + nt_errors.ERROR_MESSAGES[e.error_code][0])
 	sys.exit()
 finally:
@@ -70,7 +70,7 @@ for pipe_name, pipe_uuid in pipes.items():
 		try:
 			dce.bind(pipe_uuid, transfer_syntax=NDR64Syntax)
 			print('{}: Ok (64 bit)'.format(pipe_name))
-		except DCERPCException, e:
+		except DCERPCException as e:
 			if 'transfer_syntaxes_not_supported' in str(e):
 				print('{}: Ok (32 bit)'.format(pipe_name))
 			else:
