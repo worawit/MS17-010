@@ -76,9 +76,9 @@ for pipe_name, pipe_uuid in pipes.items():
 			else:
 				print('{}: Ok ({})'.format(pipe_name, str(e)))
 		dce.disconnect()
-	except smb.SessionError, e:
+	except smb.SessionError as e:
 		print('{}: {}'.format(pipe_name, nt_errors.ERROR_MESSAGES[e.error_code][0]))
-	except smbconnection.SessionError, e:
+	except smbconnection.SessionError as e:
 		print('{}: {}'.format(pipe_name, nt_errors.ERROR_MESSAGES[e.error][0]))
 
 
