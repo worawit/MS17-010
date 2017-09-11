@@ -5,12 +5,19 @@ yellow='\e[0;33m'
 path=$(pwd)
 lt=$1
 chkip() {
-ping -c 1 $var > /dev/null 2>&1
-png="$?" 
- if [ $png == "0" ]
-then
-python checker.py $var > $lg
+python checker.py $var > $lg 2>&1
+
+# ip file to be created in current path with vulnerable ips
 ipl=$path/iplist.txt
+
+# Check from output if connection to ip had a timeout
+gtdata=$(cat $lg | grep "timeout")
+if [[ ! -z $gtdata ]]
+then
+echo -e $yellow "Connection to $var Time Out"
+else
+
+# timeout was not recieved , so check if ip is vulnerable
 if [ -f $ipl ]
 then
 gtdata=$(cat $lg | grep "Ok")
@@ -38,8 +45,6 @@ echo $var >> $ipl
 echo $cp >> $ipl
 fi
 fi
-else
-echo -e $yellow "$var Not Online"
 fi
 }
 if [ -z $lt ]
