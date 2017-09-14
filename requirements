@@ -1,0 +1,4 @@
+* Required libraries :
+python-impacket 
+python-crypto 
+python-pyasn1-modules
