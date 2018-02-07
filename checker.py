@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from mysmb import MYSMB
 from impacket import smb, smbconnection, nt_errors
 from impacket.uuid import uuidtup_to_bin
