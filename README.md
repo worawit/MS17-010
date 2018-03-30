@@ -24,7 +24,10 @@ This repository is for public my work on MS17-010. I have no plan to do any supp
  * **mysmb.py** Extended Impacket SMB class for easier to exploit MS17-010 bugs
  * **npp_control.py** PoC for controlling nonpaged pool allocation with session setup command
  * **zzz_exploit.py** Exploit for Windows 2000 and later (requires access to named pipe)
+ * **chkip** Check ip list for vulnerable ips . (it will create a file with the vulnerable ips)
 
+** Usage :
+* chkip myiplist.txt
 
 ## Anonymous user
 

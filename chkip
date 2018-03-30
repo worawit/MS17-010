@@ -1,0 +1,68 @@
+#!/bin/bash
+green='\033[92m'
+red='\e[1;31m'
+yellow='\e[0;33m'
+path=$(pwd)
+lt=$1
+chkip() {
+python checker.py $var > $lg 2>&1
+
+# ip file to be created in current path with vulnerable ips
+ipl=$path/iplist.txt
+
+# Check from output if connection to ip had a timeout
+gtdata=$(cat $lg | grep "timeout")
+if [[ ! -z $gtdata ]]
+then
+echo -e $yellow "Connection to $var Time Out"
+else
+
+# timeout was not recieved , so check if ip is vulnerable
+if [ -f $ipl ]
+then
+gtdata=$(cat $lg | grep "Ok")
+if [[ -z $gtdata ]]
+then
+echo -e $red "IP $var not vulnerable"
+else
+echo -e $green "IP $var Vulnerable"
+cp=$(cat $lg)
+echo "" >> $ipl
+echo $var >> $ipl
+echo $cp >> $ipl
+fi
+else
+gtdata=$(cat $lg | grep "Ok")
+if [[ -z $gtdata ]]
+then
+echo -e $red "IP $var not vulnerable"
+else
+echo -e $green "IP $var Vulnerable"
+cp=$(cat $lg)
+echo "Vulnerable IPS to Eternal Blue & vulnerable services" > $ipl
+echo "" >> $ipl
+echo $var >> $ipl
+echo $cp >> $ipl
+fi
+fi
+fi
+}
+if [ -z $lt ]
+then
+echo "you must input an ip list to check"
+echo ""
+echo "Example: chkip /myiplist.txt"
+exit 1
+else
+ips=$(cat "$lt" | wc -l)
+echo ""
+echo "Going to check $ips ips "
+for i in $(seq "$ips")
+do
+lg=$path/log.txt
+rm $lg >/dev/null 2>&1
+var=$(cat "$lt" | awk -v nb=$i 'NR==nb')
+echo -e $green "checking ip $var"
+chkip
+done
+fi
