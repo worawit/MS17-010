@@ -104,7 +104,7 @@ def _setup_login_packet_hook(maxBufferSize):
 
 
 class MYSMB(smb.SMB):
-	def __init__(self, remote_host, use_ntlmv2=True, timeout=8):
+	def __init__(self, remote_host, remote_port=445, use_ntlmv2=True, timeout=8):
 		self.__use_ntlmv2 = use_ntlmv2
 		self._default_tid = 0
 		self._pid = os.getpid() & 0xffff
@@ -115,7 +115,7 @@ class MYSMB(smb.SMB):
 		self._last_tid = 0  # last tid from connect_tree()
 		self._last_fid = 0  # last fid from nt_create_andx()
 		self._smbConn = None
-		smb.SMB.__init__(self, remote_host, remote_host, timeout=timeout)
+		smb.SMB.__init__(self, remote_host, remote_host, sess_port=remote_port, timeout=timeout)
 
 	def set_pid(self, pid):
 		self._pid = pid
