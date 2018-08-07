@@ -1062,7 +1062,7 @@ if len(sys.argv) < 2:
 target = sys.argv[1]
 lfile = sys.argv[2]
 port = 445
-pipe_name = None if len(sys.argv) < 4 else sys.argv[4]
+pipe_name = None if len(sys.argv) < 5 else sys.argv[4]
 
 try:
 	if sys.argv[3] != '':
