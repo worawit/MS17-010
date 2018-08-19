@@ -1062,11 +1062,11 @@ if len(sys.argv) < 2:
 target = sys.argv[1]
 lfile = sys.argv[2]
 port = 445
-pipe_name = None if len(sys.argv) < 5 else sys.argv[4]
+pipe_name = None if len(sys.argv) < 5 else sys.argv[5]
 
 try:
-	if sys.argv[3] != '':
-		port = int(sys.argv[3])
+	if sys.argv[4] != '':
+		port = int(sys.argv[4])
 except:
 	pass
 
