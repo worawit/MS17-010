@@ -31,13 +31,21 @@ pipes = {
 }
 
 
-if len(sys.argv) != 2:
-	print("{} <ip>".format(sys.argv[0]))
+if len(sys.argv) < 2:
+	print("{} <ip> [port]".format(sys.argv[0]))
 	sys.exit(1)
 
 target = sys.argv[1]
+port = 445
 
-conn = MYSMB(target)
+try:
+	if sys.argv[2] != '':
+		port = int(sys.argv[2])
+except:
+	pass
+
+print('Trying to connect to %s:%d' % (target, port))
+conn = MYSMB(target, port)
 try:
 	conn.login(USERNAME, PASSWORD)
 except smb.SessionError as e:
