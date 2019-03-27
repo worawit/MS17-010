@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument("lhost", help="Local IP address for revere connection")
+parser.add_argument("lhost", help="Local IP address for reverse connection")
 parser.add_argument("lport", help="Local port number")
 parser.add_argument("outfile",help="Name for the resulting shellcode binary")
 parser.add_argument("-p","--payload", choices=["s","n","m"], default="n",
