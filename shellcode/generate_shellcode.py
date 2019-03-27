@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-'''This script generates shellcode for use with EternalBlue exploits,
-by utilizing msfvenom to generate user-space code, then concatenating
-it with the supplied kernel-space code. It gives the user a choice of 
-a couple payloads each for x86 and x64 architectures.'''
+'''This script generates formatted shellcode for use with EternalBlue exploits,
+by assembling the kernel shellcode, then utilizing msfvenom to generate 
+user-space shellcode, then concatenating it with the kernel-space code. It
+gives the user a choice of a couple payloads each for x86 and x64 architectures.'''
 
 __author__="phi10s"
 
