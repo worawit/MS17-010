@@ -41,7 +41,7 @@ sessionSetup['Parameters']['SecurityBlobLength'] = 0  # this is OEMPasswordLen f
 sessionSetup['Parameters']['Capabilities']       = smb.SMB.CAP_EXTENDED_SECURITY | smb.SMB.CAP_USE_NT_ERRORS
 
 # allocate nonpaged pool size 0x15ff (padding 1 byte, AccountName 2 bytes, PrimaryDomain 2 bytes)
-sessionSetup['Data'] = pack('<H', 0x1604) + '\x00'*20
+sessionSetup['Data'] = pack('<H', 0x1604) + b'\x00'*20
 pkt.addCommand(sessionSetup)
 
 conn.sendSMB(pkt)
